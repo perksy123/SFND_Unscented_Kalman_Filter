@@ -63,6 +63,15 @@ void UKF::ProcessMeasurement(MeasurementPackage meas_package) {
    * TODO: Complete this function! Make sure you switch between lidar and radar
    * measurements.
    */
+  if (meas_package.sensor_type_ == MeasurementPackage::LASER)
+  {
+    UpdateLidar(meas_package);
+  }
+  else
+  {
+    UpdateRadar(meas_package);
+  }
+  
 }
 
 void UKF::Prediction(double delta_t) {
