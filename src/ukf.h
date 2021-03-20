@@ -41,6 +41,19 @@ class UKF {
    */
   void UpdateRadar(MeasurementPackage meas_package);
 
+  /**
+  * Student assignment functions
+  */
+
+  void AugmentedSigmaPoints();
+  void SigmaPointPrediction(double delta_t);
+  void PredictMeanAndCovariance();
+
+  void PredictRadarMeasurement();
+  void PredictLidarMeasurement();
+
+  void UpdateStateRadar(const MeasurementPackage &meas_package);
+  void UpdateStateLidar(const MeasurementPackage &meas_package);
 
   // initially set to false, set to true in first call of ProcessMeasurement
   bool is_initialized_;
@@ -62,6 +75,30 @@ class UKF {
 
   // time when the state is true, in us
   long long time_us_;
+
+  // radar mean predicted measurement
+  Eigen::VectorXd z_pred_r_;
+
+  // laser mean predicted measurement
+  Eigen::MatrixXd z_pred_l_;
+
+  // radar measurement space sigma points
+  Eigen::MatrixXd Zsig_r_;
+
+  // laser measurement space sigma points
+  Eigen::MatrixXd Zsig_l_;
+
+  // radar measurement covariance matrix
+  Eigen::MatrixXd S_r_;
+
+  // laser measurement covariance matrix
+  Eigen::MatrixXd S_l_;
+
+  // Laser measurement noise matrix
+  Eigen::MatrixXd R_l;
+
+  // Radar measurement noise matrix
+  Eigen::MatrixXd R_r;
 
   // Process noise standard deviation longitudinal acceleration in m/s^2
   double std_a_;
@@ -93,8 +130,21 @@ class UKF {
   // Augmented state dimension
   int n_aug_;
 
+  // Radar measurement dimention
+  int n_z_R_;
+
+  // Laser measurement dimention
+  int n_z_L_;
+
   // Sigma point spreading parameter
   double lambda_;
+
+  // The process noise matrix
+  Eigen::MatrixXd proc_noise_;
+
+  // Augmented sigma point matrix
+  Eigen::MatrixXd Xsig_aug_;
+
 };
 
 #endif  // UKF_H
