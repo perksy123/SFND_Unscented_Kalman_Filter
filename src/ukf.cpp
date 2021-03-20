@@ -1,5 +1,4 @@
 
-#include "stdafx.h"
 
 #include "ukf.h"
 #include "Eigen/Dense"
@@ -24,10 +23,12 @@ UKF::UKF() {
   P_ = MatrixXd(5, 5);
 
   // Process noise standard deviation longitudinal acceleration in m/s^2
-  std_a_ = 30;
+//  std_a_ = 30;
+  std_a_ = 5;
 
   // Process noise standard deviation yaw acceleration in rad/s^2
-  std_yawdd_ = 30;
+//  std_yawdd_ = 30;
+  std_yawdd_ = 5;
 
   /**
    * DO NOT MODIFY measurement noise values below.
@@ -58,7 +59,10 @@ UKF::UKF() {
     * Hint: one or more values initialized above might be wildly off...
     */
 
-    // State dimension
+  // The first measurement initialises the filter.
+  is_initialized_ = false;
+
+  // State dimension
   n_x_ = 5;
 
   // Augmented state dimension
@@ -72,6 +76,8 @@ UKF::UKF() {
 
   lambda_ = 3. - n_aug_;
 
+  weights_ = VectorXd(2 * n_aug_ + 1);
+
   // Compute the wights for calculating the sigma points
   double weight_0 = lambda_ / (lambda_ + n_aug_);
   double weight = 0.5 / (lambda_ + n_aug_);
@@ -80,6 +86,9 @@ UKF::UKF() {
   for (int i = 1; i < 2 * n_aug_ + 1; ++i) {
     weights_(i) = weight;
   }
+
+  // predicted sigma points.
+  Xsig_pred_ = MatrixXd(n_x_, 2 * n_aug_ + 1);
 
   // radar mean predicted measurement
   z_pred_r_ = VectorXd(n_z_R_);
@@ -178,7 +187,7 @@ void UKF::ProcessMeasurement(MeasurementPackage meas_package)
   /// Check if the measurement comes from the laser
   if (meas_package.sensor_type_ == MeasurementPackage::LASER)
   {
-    UpdateRadar(meas_package);
+    UpdateLidar(meas_package);
   }
   else
   {
@@ -761,7 +770,7 @@ void UKF::UpdateStateLidar(const MeasurementPackage &meas_package)
     while (xTerm(3)> M_PI) xTerm(3) -= 2.*M_PI;
     while (xTerm(3)<-M_PI) xTerm(3) += 2.*M_PI;
 
-    Tc = Tc + weights_(i) * xTerm * xTerm.transpose();
+    Tc = Tc + weights_(i) * xTerm * zTerm.transpose();
   }
 
   // Kalman gain K;
