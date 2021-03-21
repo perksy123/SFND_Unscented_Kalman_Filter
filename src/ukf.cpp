@@ -2,6 +2,8 @@
 
 #include "ukf.h"
 #include "Eigen/Dense"
+#include <iostream>
+#include <fstream>
 
 using Eigen::MatrixXd;
 using Eigen::VectorXd;
@@ -140,8 +142,16 @@ void UKF::ProcessMeasurement(MeasurementPackage meas_package)
       const double px = meas_package.raw_measurements_[0];
       const double py = meas_package.raw_measurements_[1];
       x_ << px, py, 0, 0, 0;
+
+      // Initiase the state covariance matrix
+      P_ << std::pow(std_laspx_, 2), 0, 0, 0, 0,
+        0, std::pow(std_laspy_, 2), 0, 0, 0,
+        0, 0, 1, 0, 0,
+        0, 0, 0, 1, 0,
+        0, 0, 0, 0, 1;      
+
     }
-    else // Process a rader measurement
+    else // Process a radar measurement
     {
       // Initialise the state from the radar
       const double r = meas_package.raw_measurements_[0];
@@ -152,19 +162,20 @@ void UKF::ProcessMeasurement(MeasurementPackage meas_package)
       const double py = r * sin(phi);
 
       x_ << px, py, 0, 0, 0;
+
+      // Initiase the state covariance matrix
+      P_ << std::pow(std_radr_, 2), 0, 0, 0, 0,
+        0, std::pow(std_radr_, 2), 0, 0, 0,
+        0, 0, std::pow(std_radrd_, 2), 0, 0,
+        0, 0, 0, std::pow(std_radphi_, 2), 0,
+        0, 0, 0, 0, std::pow(std_radphi_, 2);   
+
     }
 
     is_initialized_ = true;
 
     // previous timestamp
     time_us_ = meas_package.timestamp_;
-
-    // Initiase the state covariance matrix
-    P_ << std::pow(std_laspx_, 2), 0, 0, 0, 0,
-      0, std::pow(std_laspy_, 2), 0, 0, 0,
-      0, 0, std::pow(std_radrd_, 2), 0, 0,
-      0, 0, 0, std::pow(std_radphi_, 2), 0,
-      0, 0, 0, 0, std::pow(std_radrd_, 2);      // Not sure about the phi_dot noise....
 
     return;
   }
@@ -373,7 +384,6 @@ void UKF::PredictMeanAndCovariance()
 void UKF::PredictRadarMeasurement()
 {
   // transform sigma points into measurement space
-  Zsig_r_.setZero();
   for (int i = 0; i < 2 * n_aug_ + 1; ++i)
   {
     const double px = Xsig_pred_(0, i);
@@ -429,7 +439,7 @@ void UKF::PredictLidarMeasurement()
   }
 
   // predict state mean (lidar)
-  z_pred_l_.fill(0);
+  z_pred_l_.setZero();
   for (int i = 0; i < 2 * n_aug_ + 1; ++i) 
   {
     z_pred_l_ = z_pred_l_ + weights_(i) * Zsig_l_.col(i);
@@ -492,6 +502,20 @@ void UKF::UpdateStateRadar(const MeasurementPackage &meas_package)
 
   x_ = x_ + K * zTerm;
   P_ = P_ - K * S_r_ * K.transpose();
+
+  nis_radar = zTerm.transpose() * S_r_.inverse() * zTerm;
+  std::ofstream nis_radar_file; 
+  static bool first_radar = true;
+  if (first_radar == true)
+  {
+    nis_radar_file.open("nis_radar.csv", std::ios::out | std::ios::trunc);
+    first_radar = false;
+  }
+  else
+    nis_radar_file.open("nis_radar.csv", std::ios::out | std::ios::ate | std::ios::app);
+
+  nis_radar_file << nis_radar << std::endl;
+  nis_radar_file.close();
 }
 
 void UKF::UpdateStateLidar(const MeasurementPackage &meas_package) 
@@ -532,4 +556,18 @@ void UKF::UpdateStateLidar(const MeasurementPackage &meas_package)
   // update state mean and covariance matrix
   x_ = x_ + K * zTerm;
   P_ = P_ - K*S_l_*K.transpose();
+
+  nis_lidar = zTerm.transpose() * S_l_.inverse() * zTerm;
+  static bool first_lidar = true;
+  std::ofstream nis_lidar_file; 
+  if (first_lidar == true)
+  {
+    nis_lidar_file.open("nis_lidar.csv", std::ios::out | std::ios::trunc);
+    first_lidar = false;
+  }
+  else
+    nis_lidar_file.open("nis_lidar.csv", std::ios::out | std::ios::ate | std::ios::app);
+  
+  nis_lidar_file << nis_lidar << std::endl;
+  nis_lidar_file.close();
 }

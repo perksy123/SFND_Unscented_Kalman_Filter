@@ -145,6 +145,9 @@ class UKF {
   // Augmented sigma point matrix
   Eigen::MatrixXd Xsig_aug_;
 
+  // normalised squared innovations (NIS)
+  double nis_lidar;
+  double nis_radar;
 };
 
 #endif  // UKF_H
