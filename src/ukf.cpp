@@ -26,7 +26,7 @@ UKF::UKF() {
 
   // Process noise standard deviation longitudinal acceleration in m/s^2
 //  std_a_ = 30;
-  std_a_ = 3.0;     // 0 - 60mph in 10s is acceleration of approx 2.5m/s^2
+  std_a_ = 4.0;     
 
   // Process noise standard deviation yaw acceleration in rad/s^2
 //  std_yawdd_ = 30;
