@@ -548,7 +548,7 @@ void UKF::UpdateStateLidar(const MeasurementPackage &meas_package)
     Tc = Tc + weights_(i) * xTerm * zTerm.transpose();
   }
 
-  // Kalman gain K;
+  // Kalman gain K
   MatrixXd K = Tc * S_l_.inverse();
 
   zTerm = z - z_pred_l_;
